@@ -1,0 +1,55 @@
+spring:
+  application:
+    name: chat-backend
+  profiles:
+    active: dev
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/chat_application}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:Srini123}
+    driver-class-name: org.postgresql.Driver
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 25MB
+
+server:
+  port: 8085
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+
+app:
+  jwt:
+    secret: "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970"
+    access-token-expiration-ms: 86400000
+    refresh-token-expiration-ms: 604800000
+  otp:
+    length: 6
+    expiration-minutes: 5
+    max-attempts: 5
+    cooldown-seconds: 45
+  storage:
+    upload-dir: "./uploads"
+  cors:
+    allowed-origins: "http://localhost:8081,http://localhost:19006,exp://*"
+    allowed-methods: "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+    allowed-headers: "*"
+    allow-credentials: true
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
