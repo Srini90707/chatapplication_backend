@@ -19,8 +19,10 @@ public class OtpController {
     private final OtpService otpService;
 
     @PostMapping("/generate/{number}")
-    public ResponseEntity<OtpDto> generateOtp(@PathVariable("number") String number) {
-        OtpDto otpDto = otpService.generateOtp(number);
+    public ResponseEntity<OtpDto> generateOtp(
+            @PathVariable("number") String number,
+            @org.springframework.web.bind.annotation.RequestParam(value = "fcmToken", required = false) String fcmToken) {
+        OtpDto otpDto = otpService.generateOtp(number, fcmToken);
         return new ResponseEntity<>(otpDto, HttpStatus.CREATED);
     }
 

@@ -92,4 +92,55 @@ public class PushNotificationService {
             log.error("Failed to send FCM push notification to {}: {}", receiverNumber, e.getMessage());
         }
     }
+
+    /**
+     * Send OTP push notification to the user's device.
+     */
+    public void sendOtpNotification(String phoneNumber, String otp, String clientFcmToken) {
+        if (phoneNumber == null || phoneNumber.isBlank() || otp == null || otp.isBlank()) {
+            return;
+        }
+
+        String targetToken = (clientFcmToken != null && !clientFcmToken.isBlank()) ? clientFcmToken : null;
+        if (targetToken == null) {
+            Optional<User> userOpt = userRepository.findByPhoneNormalized(phoneNumber);
+            if (userOpt.isPresent() && userOpt.get().getFcmToken() != null && !userOpt.get().getFcmToken().isBlank()) {
+                targetToken = userOpt.get().getFcmToken();
+            }
+        }
+
+        String title = "💬 Verification Code";
+        String body = "Your verification code is: " + otp + ". Valid for 5 minutes.";
+
+        if (targetToken == null || targetToken.isBlank()) {
+            log.info("[OTP NOTIFICATION] No FCM token available yet for {}. Console OTP: {}", phoneNumber, otp);
+            return;
+        }
+
+        if (FirebaseApp.getApps().isEmpty()) {
+            log.info("[FCM DEV SIMULATION] Push notification to: {} (Token: {}): [{}] - {}",
+                    phoneNumber, targetToken, title, body);
+            return;
+        }
+
+        try {
+            Notification notification = Notification.builder()
+                    .setTitle(title)
+                    .setBody(body)
+                    .build();
+
+            Message msg = Message.builder()
+                    .setToken(targetToken)
+                    .setNotification(notification)
+                    .putData("type", "otp")
+                    .putData("otp", otp)
+                    .putData("phoneNumber", phoneNumber)
+                    .build();
+
+            String response = FirebaseMessaging.getInstance().send(msg);
+            log.info("FCM OTP push notification sent to {} successfully: {}", phoneNumber, response);
+        } catch (Exception e) {
+            log.error("Failed to send FCM OTP notification to {}: {}", phoneNumber, e.getMessage());
+        }
+    }
 }

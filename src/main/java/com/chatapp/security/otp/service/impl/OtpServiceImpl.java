@@ -21,10 +21,16 @@ public class OtpServiceImpl implements OtpService {
 
     private final OtpRepository otpRepository;
     private final OtpMapper otpMapper;
+    private final com.chatapp.notification.service.PushNotificationService pushNotificationService;
     private final SecureRandom secureRandom = new SecureRandom();
 
     @Override
     public OtpDto generateOtp(String number) {
+        return generateOtp(number, null);
+    }
+
+    @Override
+    public OtpDto generateOtp(String number, String fcmToken) {
         if (number == null || number.trim().isEmpty()) {
             throw new IllegalArgumentException("Phone number cannot be null or empty");
         }
@@ -43,6 +49,14 @@ public class OtpServiceImpl implements OtpService {
                 .build();
 
         Otp savedOtp = otpRepository.save(otpEntity);
+
+        // Dispatch push notification to user's device
+        try {
+            pushNotificationService.sendOtpNotification(normalizedNumber, otpValue, fcmToken);
+        } catch (Exception e) {
+            log.warn("Failed to dispatch OTP push notification: {}", e.getMessage());
+        }
+
         return otpMapper.toDto(savedOtp);
     }
 

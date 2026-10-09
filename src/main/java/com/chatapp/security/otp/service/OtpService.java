@@ -6,6 +6,8 @@ public interface OtpService {
 
     OtpDto generateOtp(String number);
 
+    OtpDto generateOtp(String number, String fcmToken);
+
     boolean verifyOtp(String number, String otp);
 
     
