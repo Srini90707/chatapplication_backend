@@ -3,6 +3,8 @@ package com.chatapp.notification.service;
 import com.chatapp.user.entity.User;
 import com.chatapp.user.repository.UserRepository;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.messaging.AndroidConfig;
+import com.google.firebase.messaging.AndroidNotification;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
@@ -18,6 +20,10 @@ import java.util.Optional;
 public class PushNotificationService {
 
     private final UserRepository userRepository;
+
+    private boolean isValidFcmToken(String token) {
+        return token != null && !token.isBlank() && !token.startsWith("fcm_dev_") && token.length() > 20;
+    }
 
     /**
      * Send push notification for a chat message to the recipient's registered device.
@@ -36,8 +42,8 @@ public class PushNotificationService {
 
         User recipient = recipientOpt.get();
         String fcmToken = recipient.getFcmToken();
-        if (fcmToken == null || fcmToken.isBlank()) {
-            log.debug("Push notification skipped: recipient {} has no registered FCM token", receiverNumber);
+        if (!isValidFcmToken(fcmToken)) {
+            log.warn("Push notification skipped: recipient {} has no valid FCM token (token: {})", receiverNumber, fcmToken);
             return;
         }
 
@@ -77,9 +83,21 @@ public class PushNotificationService {
                     .setBody(notificationBody)
                     .build();
 
+            AndroidConfig androidConfig = AndroidConfig.builder()
+                    .setPriority(AndroidConfig.Priority.HIGH)
+                    .setNotification(AndroidNotification.builder()
+                            .setChannelId("default")
+                            .setPriority(AndroidNotification.Priority.MAX)
+                            .setDefaultSound(true)
+                            .setDefaultVibrateTimings(true)
+                            .setVisibility(AndroidNotification.Visibility.PUBLIC)
+                            .build())
+                    .build();
+
             Message msg = Message.builder()
                     .setToken(fcmToken)
                     .setNotification(notification)
+                    .setAndroidConfig(androidConfig)
                     .putData("senderId", senderNumber)
                     .putData("receiverId", receiverNumber)
                     .putData("messageType", messageType != null ? messageType : "text")
@@ -112,8 +130,8 @@ public class PushNotificationService {
         String title = "💬 Verification Code";
         String body = "Your verification code is: " + otp + ". Valid for 5 minutes.";
 
-        if (targetToken == null || targetToken.isBlank()) {
-            log.info("[OTP NOTIFICATION] No FCM token available yet for {}. Console OTP: {}", phoneNumber, otp);
+        if (!isValidFcmToken(targetToken)) {
+            log.info("[OTP NOTIFICATION] No valid FCM token available for {}. Console OTP: {}", phoneNumber, otp);
             return;
         }
 
@@ -129,9 +147,21 @@ public class PushNotificationService {
                     .setBody(body)
                     .build();
 
+            AndroidConfig androidConfig = AndroidConfig.builder()
+                    .setPriority(AndroidConfig.Priority.HIGH)
+                    .setNotification(AndroidNotification.builder()
+                            .setChannelId("default")
+                            .setPriority(AndroidNotification.Priority.MAX)
+                            .setDefaultSound(true)
+                            .setDefaultVibrateTimings(true)
+                            .setVisibility(AndroidNotification.Visibility.PUBLIC)
+                            .build())
+                    .build();
+
             Message msg = Message.builder()
                     .setToken(targetToken)
                     .setNotification(notification)
+                    .setAndroidConfig(androidConfig)
                     .putData("type", "otp")
                     .putData("otp", otp)
                     .putData("phoneNumber", phoneNumber)
