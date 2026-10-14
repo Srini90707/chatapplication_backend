@@ -33,6 +33,9 @@ public class User {
     @Column(name = "fcm_token", columnDefinition = "TEXT")
     private String fcmToken;
 
+    @Column(name = "profile_image")
+    private byte[] profileImage;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

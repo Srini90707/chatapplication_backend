@@ -173,4 +173,83 @@ public class PushNotificationService {
             log.error("Failed to send FCM OTP notification to {}: {}", phoneNumber, e.getMessage());
         }
     }
+
+    /**
+     * Send incoming call push notification to the recipient's registered device.
+     */
+    public void sendCallNotification(String callerNumber, String receiverNumber, String channelName) {
+        sendCallNotification(callerNumber, receiverNumber, channelName, "", "");
+    }
+
+    /**
+     * Send incoming call push notification to the recipient's registered device with complete Agora credentials.
+     */
+    public void sendCallNotification(String callerNumber, String receiverNumber, String channelName, String agoraAppId, String agoraToken) {
+        if (receiverNumber == null || receiverNumber.isBlank()) {
+            return;
+        }
+
+        Optional<User> recipientOpt = userRepository.findByPhoneNormalized(receiverNumber);
+        if (recipientOpt.isEmpty()) {
+            log.debug("Call push notification skipped: recipient not found for number {}", receiverNumber);
+            return;
+        }
+
+        User recipient = recipientOpt.get();
+        String fcmToken = recipient.getFcmToken();
+        if (!isValidFcmToken(fcmToken)) {
+            log.warn("Call push notification skipped: recipient {} has no valid FCM token", receiverNumber);
+            return;
+        }
+
+        String callerName = callerNumber;
+        Optional<User> senderOpt = userRepository.findByPhoneNormalized(callerNumber);
+        if (senderOpt.isPresent() && senderOpt.get().getName() != null && !senderOpt.get().getName().isBlank()) {
+            callerName = senderOpt.get().getName();
+        }
+
+        String title = "Incoming Voice Call";
+        String body = callerName + " is calling you...";
+
+        if (FirebaseApp.getApps().isEmpty()) {
+            log.info("[FCM DEV SIMULATION] Call notification to {}: [{}] - {}", receiverNumber, title, body);
+            return;
+        }
+
+        try {
+            Notification notification = Notification.builder()
+                    .setTitle(title)
+                    .setBody(body)
+                    .build();
+
+            AndroidConfig androidConfig = AndroidConfig.builder()
+                    .setPriority(AndroidConfig.Priority.HIGH)
+                    .setNotification(AndroidNotification.builder()
+                            .setChannelId("calls")
+                            .setPriority(AndroidNotification.Priority.MAX)
+                            .setDefaultSound(true)
+                            .setDefaultVibrateTimings(true)
+                            .setVisibility(AndroidNotification.Visibility.PUBLIC)
+                            .build())
+                    .build();
+
+            Message msg = Message.builder()
+                    .setToken(fcmToken)
+                    .setNotification(notification)
+                    .setAndroidConfig(androidConfig)
+                    .putData("type", "VOICE_CALL")
+                    .putData("channelName", channelName != null ? channelName : "")
+                    .putData("callerId", callerNumber != null ? callerNumber : "")
+                    .putData("callerName", callerName)
+                    .putData("receiverId", receiverNumber)
+                    .putData("agoraAppId", agoraAppId != null ? agoraAppId : "")
+                    .putData("agoraToken", agoraToken != null ? agoraToken : "")
+                    .build();
+
+            String response = FirebaseMessaging.getInstance().send(msg);
+            log.info("FCM Call push notification sent to {} successfully: {}", receiverNumber, response);
+        } catch (Exception e) {
+            log.error("Failed to send FCM Call notification to {}: {}", receiverNumber, e.getMessage());
+        }
+    }
 }

@@ -37,3 +37,6 @@ build/
 Thumbs.db
 *.log
 uploads/
+.env
+serviceAccountKey*.json*
+**/serviceAccountKey*.json*

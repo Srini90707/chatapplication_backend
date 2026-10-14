@@ -86,10 +86,16 @@ public class UserServiceImpl implements UserService {
 
         String normalizedNumber = number.trim();
         User existingUser = userRepository.findByNumber(normalizedNumber)
+                .or(() -> userRepository.findByNumber("+" + normalizedNumber))
+                .or(() -> userRepository.findByPhoneNormalized(normalizedNumber))
                 .orElseThrow(() -> new UserNotFoundException("User not found with number: " + normalizedNumber));
 
         if (userDto.getName() != null && !userDto.getName().trim().isEmpty()) {
             existingUser.setName(userDto.getName().trim());
+        }
+
+        if (userDto.getProfileImage() != null) {
+            existingUser.setProfileImage(userDto.getProfileImage());
         }
 
         User updatedUser = userRepository.save(existingUser);
@@ -105,6 +111,8 @@ public class UserServiceImpl implements UserService {
 
         String normalizedNumber = number.trim();
         User user = userRepository.findByNumber(normalizedNumber)
+                .or(() -> userRepository.findByNumber("+" + normalizedNumber))
+                .or(() -> userRepository.findByPhoneNormalized(normalizedNumber))
                 .orElseThrow(() -> new UserNotFoundException("User not found with number: " + normalizedNumber));
         return userMapper.toDto(user);
     }

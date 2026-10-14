@@ -9,6 +9,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 
 import jakarta.annotation.PostConstruct;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 
 @Slf4j
@@ -18,15 +20,24 @@ public class FirebaseConfig {
     @PostConstruct
     public void initialize() {
         try {
-            ClassPathResource resource = new ClassPathResource("serviceAccountKey.json");
-            if (!resource.exists()) {
-                resource = new ClassPathResource("serviceAccountKey.json.json");
+            InputStream serviceAccount = null;
+
+            // 1. Check file in backend root
+            File file = new File("serviceAccountKey.json");
+            if (file.exists()) {
+                serviceAccount = new FileInputStream(file);
+            } else {
+                // 2. Fallback to classpath if bundled
+                ClassPathResource resource = new ClassPathResource("serviceAccountKey.json");
+                if (resource.exists()) {
+                    serviceAccount = resource.getInputStream();
+                }
             }
-            if (!resource.exists()) {
-                log.warn("serviceAccountKey.json not found in classpath. Push notifications will be logged to console in dev mode.");
+
+            if (serviceAccount == null) {
+                log.warn("serviceAccountKey.json not found in backend directory. Push notifications will be logged to console in dev mode.");
                 return;
             }
-            InputStream serviceAccount = resource.getInputStream();
 
             FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))

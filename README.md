@@ -9,8 +9,6 @@ Production-grade, high-performance Java backend built with **Spring Boot 3.3**, 
 ```
 Backend/
 ├── .gitignore                          # Standard git ignore for Java/Maven/IntelliJ/VSCode
-├── Dockerfile                          # Multi-stage containerization build (JDK 21 -> JRE 21 alpine)
-├── docker-compose.yml                  # Production-like multi-container setup (PostgreSQL, Redis, App)
 ├── pom.xml                             # Maven build configuration with all dependencies
 ├── README.md                           # Comprehensive documentation and developer guide
 ├── src/
@@ -118,19 +116,13 @@ Backend/
 
 ## ⚡ Quick Start
 
-### 1. Run with Docker Compose (PostgreSQL + Redis + Backend)
+### Run Locally via Maven
+Ensure you have Java 21 and Maven installed:
 ```bash
-docker compose up -d
-```
-
-### 2. Run Locally via Maven
-Ensure you have Java 21 and Maven installed. Start the database dependencies:
-```bash
-docker compose up -d postgres redis
 mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
-The backend server starts on `http://localhost:8080`.
+The backend server starts on `http://localhost:8085`.
 
 ---
 

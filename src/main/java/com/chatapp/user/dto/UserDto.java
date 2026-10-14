@@ -16,4 +16,5 @@ public class UserDto {
     private String number;
     private String name;
     private String fcmToken;
+    private byte[] profileImage;
 }

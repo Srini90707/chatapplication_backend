@@ -35,8 +35,18 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("update/{number}")
+    @PutMapping("/update/{number}")
     public ResponseEntity<UserDto> updateUser(@PathVariable("number") String number, @RequestBody UserDto userDto) {
+        UserDto updatedUser = userService.updateUser(number, userDto);
+        return ResponseEntity.ok(updatedUser);
+    }
+
+    @PutMapping("/update")
+    public ResponseEntity<UserDto> updateCurrentUser(@RequestBody UserDto userDto, java.security.Principal principal) {
+        String number = userDto.getNumber();
+        if ((number == null || number.isBlank()) && principal != null) {
+            number = principal.getName();
+        }
         UserDto updatedUser = userService.updateUser(number, userDto);
         return ResponseEntity.ok(updatedUser);
     }

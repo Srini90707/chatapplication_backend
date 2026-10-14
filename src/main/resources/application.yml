@@ -3,10 +3,15 @@ spring:
     name: chat-backend
   profiles:
     active: dev
+  config:
+    import:
+      - optional:file:.env[.properties]
+      - optional:file:./.env[.properties]
+      - optional:file:../.env[.properties]
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/chat_application}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:Srini123}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
   servlet:
     multipart:
@@ -14,16 +19,19 @@ spring:
       max-request-size: 25MB
 
 server:
-  port: 8085
+  port: ${PORT:8085}
   compression:
     enabled: true
     mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
 
 app:
+  agora:
+    app-id: ${AGORA_APP_ID}
+    app-certificate: ${AGORA_APP_CERTIFICATE}
   jwt:
-    secret: "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970"
-    access-token-expiration-ms: 86400000
-    refresh-token-expiration-ms: 604800000
+    secret: ${JWT_SECRET}
+    access-token-expiration-ms: ${JWT_ACCESS_TOKEN_EXPIRATION_MS:86400000}
+    refresh-token-expiration-ms: ${JWT_REFRESH_TOKEN_EXPIRATION_MS:604800000}
   otp:
     length: 6
     expiration-minutes: 5

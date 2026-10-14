@@ -1,5 +1,6 @@
 package com.chatapp.websocket.controller;
 
+import com.chatapp.websocket.dto.ChatHistoryResponse;
 import com.chatapp.websocket.dto.ChatMessageDto;
 import com.chatapp.websocket.service.MessageService;
 import lombok.RequiredArgsConstructor;
@@ -55,7 +56,24 @@ public class MessageController {
     }
 
     /**
-     * REST API: Fetches message history when a user opens a conversation screen.
+     * REST API: Paginated chat history endpoint
+     * GET /api/v1/chat/history/{otherUserId}?page=0&size=50
+     */
+    @GetMapping("/api/v1/chat/history/{otherUserId}")
+    public ResponseEntity<ChatHistoryResponse> getChatHistory(
+            @PathVariable("otherUserId") String otherUserId,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "50") int size
+    ) {
+        if (page < 0) {
+            return ResponseEntity.badRequest().build();
+        }
+        ChatHistoryResponse response = messageService.getChatHistory(otherUserId, page, size);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * REST API: Fetches message history when a user opens a conversation screen (legacy endpoint).
      * GET /messages/{contactNumber}
      */
     @GetMapping("/messages/{contactNumber}")
@@ -76,7 +94,7 @@ public class MessageController {
         return ResponseEntity.ok(messages);
     }
 
-        /**
+    /**
      * REST API: Sends a message (saves to DB and pushes via WebSocket to recipient)
      * POST /messages
      */
@@ -92,5 +110,4 @@ public class MessageController {
         ChatMessageDto savedMessage = messageService.sendMessage(messageDto);
         return ResponseEntity.ok(savedMessage);
     }
-
 }
